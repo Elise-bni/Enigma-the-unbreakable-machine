@@ -93,7 +93,7 @@ def decryption(message:str,decryption_mode:int,permutations:list[int]):
             lc,mc,rc=ascending_counter(lc,mc,rc,25)
     return None
 
-def valeurs_graphique(mode:int): # This function takes a LOT of time to generate all the values so they are provided directly in the graph.py file.
+def graph_values_generation(mode:int): # This function takes a LOT of time to generate all the values so they are provided directly in the graph.py file.
     """
     @brief generate the y values to plot a graph of the decryption time
     @param mode : mode of decryption
