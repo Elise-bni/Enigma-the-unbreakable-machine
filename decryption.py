@@ -3,7 +3,15 @@ import time
    
 permutations=["123","213","312","132","231","321","124","214","412","142","241","421","125","215","512","152","251","521","134","314","413","143","341","431","135","315","513","153","351","531","145","415","514","154","451","541","234","324","423","243","342","432","235","325","523","253","352","532","245","425","524","254","452","542","345","435","534","354","453","543"] 
    
-def ascending_counter(lc:int,mc:int,rc:int,n): # left, middle and right counters ; n stands for the number of elements on the rotor (=nb of rotations for a full turn)
+def ascending_counter(lc:int,mc:int,rc:int,n):
+    """
+    @brief increase the base n counter
+    @param lc : left counter
+    @param mc : middle counter
+    @param rc : right counter
+    @param n : counter base
+    @return int : new state of the counter
+    """
     if rc==n:
         if mc==n:
             lc+=1
@@ -11,7 +19,15 @@ def ascending_counter(lc:int,mc:int,rc:int,n): # left, middle and right counters
     rc+=1
     return lc%(n+1),mc%(n+1),rc%(n+1)   
    
-def descending_counter(lc:int,mc:int,rc:int,n): # left, middle and right counters ; n stands for the number of elements on the rotor (=nb of rotations for a full turn)
+def descending_counter(lc:int,mc:int,rc:int,n):
+    """
+    @brief decrease the base n counter
+    @param lc : left counter
+    @param mc : middle counter
+    @param rc : right counter
+    @param n : counter base
+    @return int : new state of the counter
+    """
     if lc==0 and mc==0 and rc==0:
         lc,mc,rc=n,n,n
     elif mc==0 and rc==0:
@@ -24,13 +40,30 @@ def descending_counter(lc:int,mc:int,rc:int,n): # left, middle and right counter
         rc-=1
     return lc,mc,rc
 
-def get_ini_rotors_settings(rotor_code:str,message_length:int,magic_word_length:int): # return the initial setting of the machine before the encryption of the message based on the end setting and the length of the message
+def get_ini_rotors_settings(rotor_code:str,message_length:int,magic_word_length:int): 
+    """
+    @brief return the initial setting of the machine before the encryption of the message
+    @param rotor_code : rotor setting read on the machine after message encryption
+    @param message_length : length of the crypted message
+    @param magic_word_length : length of the word for which the decrypted version is known
+    @return str : rotor setting
+    """
     counter=(ord(rotor_code[0])-65,ord(rotor_code[1])-65,ord(rotor_code[2])-65)
-    for i in range(message_length-magic_word_length):
+    for _ in range(message_length-magic_word_length):
         counter=descending_counter(counter[0],counter[1],counter[2],25)
     return chr(counter[0]+65)+chr(counter[1]+65)+chr(counter[2]+65)
 
-def decryption(message:str,decryption_mode:int):
+def decryption(message:str,decryption_mode:int,permutations:list[int]):
+    """
+    @brief decrypt the message using the chosen mode
+    @param message : message to decode
+    @param decryption_mode : method used to parse the permutation list :
+            1: from beginning to end
+            2: from end to beginning
+            3: from the edges to the center
+    @param permutations : List of all permutations with 5 rotors and 3 slots
+    @return float : time to find the encryption key    
+    """
     initial_time=time.perf_counter()
     if decryption_mode == 1 or decryption_mode == 3:
         txt1=""
@@ -60,7 +93,12 @@ def decryption(message:str,decryption_mode:int):
             lc,mc,rc=ascending_counter(lc,mc,rc,25)
     return None
 
-def valeurs_graphique(mode): # This function takes a LOT of time to generate all the values so they are provided directly in the graphic.py file.
+def valeurs_graphique(mode:int): # This function takes a LOT of time to generate all the values so they are provided directly in the graph.py file.
+    """
+    @brief generate the y values to plot a graph of the decryption time
+    @param mode : mode of decryption
+    @return list[float] : decryption times    
+    """
     y=[]
     for i in range(len(permutations)):
         message = encryption.Enigma("WETTER KANZLER",permutations[i],"AAA","B",[])
