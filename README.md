@@ -71,7 +71,7 @@ The implemented strategy consists in:
 
   * all rotor permutations
   * all possible initial positions
-* searching for **probable words** in the decrypted message (e.g. *METEO*, *CHANCELIER*),
+* searching for **probable words** in the decrypted message (e.g. *WETTER*, *KANZLER*),
 * measuring the **time required to recover the correct configuration**.
 
 This approach illustrates:
