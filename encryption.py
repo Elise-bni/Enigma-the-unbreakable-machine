@@ -1,16 +1,16 @@
-rotor = {1:"EKMFLGDQVZNTOWYHXUSPAIBRCJ",
+raw_rotors = {1:"EKMFLGDQVZNTOWYHXUSPAIBRCJ",
        2:"AJDKSIRUXBLHWTMCQGZNPYFVOE",
        3:"BDFHJLCPRTXVZNYEIWGAKMUSQO",
        4:"ESOVPZJAYQUIRHXLNFTGKDCMWB",
        5:"VZBRGITYUPSDNHLXAWMJQOFECK"}
 
-rotor_ref={1:"ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+raw_rotors_ref={1:"ABCDEFGHIJKLMNOPQRSTUVWXYZ",
        2:"ABCDEFGHIJKLMNOPQRSTUVWXYZ",
        3:"ABCDEFGHIJKLMNOPQRSTUVWXYZ",
        4:"ABCDEFGHIJKLMNOPQRSTUVWXYZ",
        5:"ABCDEFGHIJKLMNOPQRSTUVWXYZ"}
 
-notches={1:'Q',
+raw_notches={1:'Q',
        2:'E',
        3:'V',
        4:'J',
@@ -18,7 +18,7 @@ notches={1:'Q',
 
 reference = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-reflectors = {'A':"EJMZALYXVBWFCRQUONTSPIKHGD",
+raw_reflectors = {'A':"EJMZALYXVBWFCRQUONTSPIKHGD",
               'B':"YRUHQSLDPXNGOKMIEBFZCWVJAT"}
 
 def find_index(L:list[str],e:str):
@@ -30,18 +30,27 @@ def find_index(L:list[str],e:str):
 def rotate_rotor(rotor:list[str], position:int):
     return rotor[position:] + rotor[:position]
 
-def used_parts(rotor_orders:str,initialization:str,ref:str,notches:dict):
+def initialize_connection_array(L:list[tuple[str]]):
+    T=[chr(i) for i in range(65,91)]
+    for e in L:
+        a,b=e
+        j,k=ord(a)-65,ord(b)-65
+        T[j],T[k]=T[k],T[j]       
+    return ''.join(T)
+
+def used_parts(rotor_orders:str,ini_rotors_position:str,reflector:str,raw_rotors:dict[str],raw_rotors_ref:dict[str],raw_notches:dict[str],raw_reflectors:dict[str]):
     rotors=[]
     rotors_ref=[]
-    index_ini={1:find_index(rotor_ref[1],initialization[0]),
-                2:find_index(rotor_ref[2],initialization[1]),
-                3:find_index(rotor_ref[3],initialization[2])}
-    for i in range(1,4):
-        rotors.append(rotate_rotor(rotor[i],index_ini[i]))
-        rotors_ref.append(rotate_rotor(rotor_ref[i],index_ini[i]))
-    reflector=reflectors[ref]
-    notches=notches[int(rotor_orders[0])]+notches[int(rotor_orders[1])]+notches[int(rotor_orders[2])]
-    return rotors,rotors_ref,reflector,notches
+    r1,r2,r3=int(rotor_orders[0]),int(rotor_orders[1]),int(rotor_orders[2])
+    ini_index={r1:find_index(raw_rotors_ref[r1],ini_rotors_position[r1-1]),
+                r2:find_index(raw_rotors_ref[r2],ini_rotors_position[r2-1]),
+                r3:find_index(raw_rotors_ref[r3],ini_rotors_position[r3-1])}
+    for i in range(3):
+        rotors.append(rotate_rotor(raw_rotors[int(rotor_orders[i])],ini_index[i+1]))
+        rotors_ref.append(rotate_rotor(raw_rotors_ref[int(rotor_orders[i])],ini_index[i+1]))
+    used_reflector=raw_reflectors[reflector]
+    used_notches=raw_notches[int(rotor_orders[0])]+raw_notches[int(rotor_orders[1])]+raw_notches[int(rotor_orders[2])]
+    return rotors,rotors_ref,used_reflector,used_notches
 
 def rotation(rotors:list[str],rotors_ref:list[str],notches:dict):
     mn,rn=notches[1],notches[2] # middle and right notches
@@ -61,7 +70,7 @@ def rotation(rotors:list[str],rotors_ref:list[str],notches:dict):
             LR_ref=rotate_rotor(LR_ref,1)
     return [LR,MR,RR],[LR_ref,MR_ref,RR_ref]
 
-def double_stepping(rotors:list[str],rotors_ref:list[str],notches:dict):
+def double_stepping(rotors:list[str],rotors_ref:list[str],notches:dict[str]):
     LR=rotors[0]
     MR=rotors[1]
     RR=rotors[2]
@@ -75,50 +84,40 @@ def double_stepping(rotors:list[str],rotors_ref:list[str],notches:dict):
         LR_ref=rotate_rotor(LR_ref,1)
     return [LR,MR,RR],[LR_ref,MR_ref,RR_ref]
 
-def Enigma(message:str,rotors_order:str,initialization:str,ref:str,notches:dict):
-    rotors,rotors_ref,reflector,notches=used_parts(rotors_order,initialization,ref,notches)  
+def Enigma(message:str,rotors_order:str,ini_rotors_position:str,reflector:str,raw_rotors:dict[str],raw_rotors_ref:dict[str],raw_notches:dict[str],raw_reflectors:dict[str],connection_array:list[tuple[str]],reference:str):
+    rotors,rotors_ref,reflector,notches=used_parts(rotors_order,ini_rotors_position,reflector,raw_rotors,raw_rotors_ref,raw_notches,raw_reflectors)
+    connections=initialize_connection_array(connection_array)
     code=""
     for k in range(len(message)):
-        rotors,rotors_ref=rotation(rotors,rotors_ref,notches)
-                
-        carac=message[k]
-        index=find_index(reference,carac)
-
-        for i in range(2,-1,-1):
-            letter=rotors[i][index]
-            index=find_index(rotors_ref[i],letter)
+        char=message[k]
+        if char==' ':
+            code=code+' '
+        else:
+            rotors,rotors_ref=rotation(rotors,rotors_ref,notches)
+            num=ord(char)-65
+            char=connections[num]
+                       
+            index=find_index(reference,char)
+            for i in range(2,-1,-1):
+                letter=rotors[i][index]
+                index=find_index(rotors_ref[i],letter)              
+            letter=reflector[index]
+            index=find_index(reference,letter)
+            for i in range(3):
+                letter=rotors_ref[i][index]
+                index=find_index(rotors[i],letter)
+            print(rotors_ref, reference[index])   
             
-        letter=reflector[index]
-        index=find_index(reference,letter)
-
-        for i in range(3):
-            letter=rotors_ref[i][index]
-            index=find_index(rotors[i],letter)
+            num=ord(reference[index])-65
+            char=connections[num]
             
-        # print(rotors_ref, reference[index])
-        
-        code=code+reference[index]
-
-        rotors,rotors_ref=double_stepping(rotors,rotors_ref,notches)
-        
+            code=code+reference[index]
+            rotors,rotors_ref=double_stepping(rotors,rotors_ref,notches)
     return code
 
-print(Enigma("HELLOWORLD","123","MDS",'B',notches))
+print(Enigma("HELLO WORLD","231","EQL","B",raw_rotors,raw_rotors_ref,raw_notches,raw_reflectors,[('E','F')],reference))
 
 """
 TODO
-Ensure that any rotor can be placed in any order:
-    A string containing the rotor numbers in order (rotor_order), with two options—see which one works:
-        - Loop over j to access rotor_order[j]: unlikely to work for long messages
-        - j counter modulo 3 (number of rotors) incremented with each letter encoding to access rotor_order[j]
-"""
-
-"""
-TODO
-Ensure that spaces can be used
-"""
-
-"""
-TODO
-Implement the connection table
+Encoding the position of the rings: rotating the reference lists without rotating the base lists?
 """
